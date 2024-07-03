@@ -1,15 +1,23 @@
-# Function to run rclone listremotes and select a remote using fzf
-function Select-RcloneRemote {
-    <#
-    .SYNOPSIS
-        Runs rclone listremotes and allows interactive selection of a remote using fzf.
-    .DESCRIPTION
-        Executes rclone listremotes to fetch the list of configured remotes and prompts the user
-        to select one using fzf for interactive selection.
-    .NOTES
-        Requires rclone and fzf to be installed and accessible in the environment.
-    #>
 
+<#
+.SYNOPSIS
+    Runs rclone listremotes and allows interactive selection of a remote using fzf.
+.DESCRIPTION
+    Executes rclone listremotes to fetch the list of configured remotes and prompts the user
+    to select one using fzf for interactive selection.
+.NOTES
+    Requires rclone and fzf to be installed and accessible in the environment.
+#>
+
+function Select-RcloneRemote {
+    # Run rclone listremotes to get the list of remotes
+    $remotes = rclone listremotes
+
+    # Use fzf for interactive selection
+    $selectedRemote = $remotes | ForEach-Object { $_ -replace ':\r?\n', '' } | fzf --height 50% --reverse --prompt="Select a remote: " | Out-String
+
+    # Return the selected remote name without the colon and newline
+    return $selectedRemote -replace "\r|\n", ""
 }
 
 # Main script
@@ -41,11 +49,13 @@ try {
             Receive-Job $job.Id
             Stop-Job $job.Id
             Remove-Job $job.Id
-        } else {
+        }
+        else {
             # If still running, return the job object
             $job
         }
-    } else {
+    }
+    else {
         "No remote selected."
     }
 }
