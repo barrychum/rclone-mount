@@ -1,47 +1,32 @@
-# Function to run rclone listremotes and select a remote using fzf
-function Select-RcloneRemote {
-    # Run rclone listremotes to get the list of remotes
-    $remotes = rclone listremotes
+# Rclone Remote Mount Script
 
-    # Use fzf for interactive selection
-    $selectedRemote = $remotes | ForEach-Object { $_ -replace ':\r?\n', '' } | fzf --height 50% --reverse --prompt="Select a remote: " | Out-String
+This script interacts with rclone to list configured remotes, allows interactive selection using fzf, and mounts the selected remote using rclone mount.
 
-    # Return the selected remote name without the colon and newline
-    return $selectedRemote -replace "\r|\n", ""
-}
+## Prerequisites
 
-# Main script
-try {
-    # Call the function to select a remote
-    $selectedRemote = Select-RcloneRemote
+Before using this script, ensure the following are installed and configured:
 
-    if ($selectedRemote) {
+- [rclone](https://rclone.org/) - Command line program to manage files on cloud storage.
+- [fzf](https://github.com/junegunn/fzf) - Command line fuzzy finder for interactive selection.
 
-        # Mount the selected remote using rclone mount
-        $mountPath = "C:\mnt\$($selectedRemote -replace ':','')"
+## Usage
 
-        "mounting $mountPath ..."
+1. Clone the repository or download the script file `mount-rclone.ps1`.
 
-        $rcloneMountCommand = "rclone mount $selectedRemote $mountPath"
+2. Open PowerShell and navigate to the directory containing `mount-rclone.ps1`.
 
-        $job = Start-Job -name $mountPath -ScriptBlock {
-            param (
-                $cmd
-            )
-            Invoke-Expression $cmd
-        } -ArgumentList $rcloneMountCommand
-        Start-Sleep -Seconds 2
-        if ($job.state -ne "Running") {
-            Receive-Job $job.Id
-            Stop-Job $job.Id
-            Remove-Job $job.id
-        }  else {
-            $job
-        }    
-    } else {
-        "No file mount point has been selected"
-    }
-}
-catch {
-    Write-Error "Failed to mount remote: $_"
-}
+3. Execute the script:
+   ```powershell
+   ./mount-rclone.ps1
+   ```
+
+4. Follow the interactive prompts:
+   - Use `fzf` to select a remote from the list provided by `rclone listremotes`.
+   - Once a remote is selected, the script will mount it locally under `C:\mnt\<remote-name>`.
+
+
+## Notes
+
+- This script assumes that `rclone` and `fzf` are accessible via the PATH environment variable.
+- Ensure proper permissions and configurations are set for accessing your cloud storage remotes via rclone.
+
